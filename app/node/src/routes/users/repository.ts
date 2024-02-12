@@ -22,31 +22,6 @@ export const getUserIdByMailAndPassword = async (
   return user[0].user_id;
 };
 
-export const getUsers = async (
-  limit: number,
-  offset: number
-): Promise<User[]> => {
-  const query = `SELECT user_id, user_name, office_id, user_icon_id FROM user ORDER BY entry_date ASC, kana ASC LIMIT ? OFFSET ?`;
-  const rows: RowDataPacket[] = [];
-
-  const [userRows] = await pool.query<RowDataPacket[]>(query, [limit, offset]);
-  for (const userRow of userRows) {
-    const [officeRows] = await pool.query<RowDataPacket[]>(
-      `SELECT office_name FROM office WHERE office_id = ?`,
-      [userRow.office_id]
-    );
-    const [fileRows] = await pool.query<RowDataPacket[]>(
-      `SELECT file_name FROM file WHERE file_id = ?`,
-      [userRow.user_icon_id]
-    );
-    userRow.office_name = officeRows[0].office_name;
-    userRow.file_name = fileRows[0].file_name;
-    rows.push(userRow);
-  }
-
-  return convertToUsers(rows);
-};
-
 export const getUsers_2 = async (
   limit: number,
   offset: number
@@ -90,30 +65,30 @@ export const getUserByUserId = async (
 export const getUsersByUserIds = async (
   userIds: string[]
 ): Promise<SearchedUser[]> => {
-  let users: SearchedUser[] = [];
-  for (const userId of userIds) {
-    const [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, kana, entry_date, office_id, user_icon_id FROM user WHERE user_id = ?",
-      [userId]
-    );
-    if (userRows.length === 0) {
-      continue;
-    }
-
-    const [officeRows] = await pool.query<RowDataPacket[]>(
-      `SELECT office_name FROM office WHERE office_id = ?`,
-      [userRows[0].office_id]
-    );
-    const [fileRows] = await pool.query<RowDataPacket[]>(
-      `SELECT file_name FROM file WHERE file_id = ?`,
-      [userRows[0].user_icon_id]
-    );
-    userRows[0].office_name = officeRows[0].office_name;
-    userRows[0].file_name = fileRows[0].file_name;
-
-    users = users.concat(convertToSearchedUser(userRows));
-  }
-  return users;
+  const query = `
+    SELECT
+      user_id,
+      user_name,
+      kana,
+      entry_date,
+      user.office_id AS office_id,
+      user.user_icon_id,
+      office_name,
+      file_name
+    FROM
+      user
+    INNER JOIN
+      office ON user.office_id = office.office_id
+    INNER JOIN
+      file ON user.user_icon_id = file.file_id
+    WHERE
+      user.user_id IN (?)
+    ORDER BY
+      user.entry_date ASC,
+      user.kana ASC
+  `;
+  const [userRows] = await pool.query<RowDataPacket[]>(query, [userIds]);
+  return convertToSearchedUser(userRows);;
 };
 
 export const getUsersByUserName = async (
