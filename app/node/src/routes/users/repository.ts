@@ -47,6 +47,15 @@ export const getUsers = async (
   return convertToUsers(rows);
 };
 
+export const getUsers_2 = async (
+  limit: number,
+  offset: number
+): Promise<User[]> => {
+  const query = `SELECT user_id, user_name, user.office_id AS office_id, user_icon_id, office_name, file_name FROM user, office, file WHERE user.user_icon_id = file.file_id AND user.office_id = office.office_id ORDER BY entry_date ASC, kana ASC LIMIT ? OFFSET ?`;
+  const [userRows] = await pool.query<RowDataPacket[]>(query, [limit, offset]);
+  return convertToUsers(userRows);
+};
+
 export const getUserByUserId = async (
   userId: string
 ): Promise<User | undefined> => {

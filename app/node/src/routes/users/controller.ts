@@ -1,6 +1,6 @@
 import express from "express";
 import { execSync } from "child_process";
-import { getUsers } from "./repository";
+import { getUsers_2 } from "./repository";
 import { getUserByUserId } from "./repository";
 import { getFileByFileId } from "../files/repository";
 import { SearchedUser, Target, User } from "../../model/types";
@@ -63,7 +63,7 @@ usersRouter.get(
     }
 
     try {
-      const users = await getUsers(limit, offset);
+      const users = await getUsers_2(limit, offset);
       res.status(200).json(users);
       console.log("successfully get users list");
     } catch (e) {
