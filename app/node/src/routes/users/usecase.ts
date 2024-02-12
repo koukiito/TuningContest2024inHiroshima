@@ -8,6 +8,15 @@ import {
   getUsersByOfficeName,
   getUsersBySkillName,
   getUsersByGoal,
+  getUserIdsByUserName,
+  getUserIdsByKana,
+  getUserIdsByMail,
+  getUserIdsByDepartmentName,
+  getUserIdsByRoleName,
+  getUserIdsByOfficeName,
+  getUserIdsBySkillName,
+  getUserIdsByGoal,
+  getUsersByUserIds,
 } from "./repository";
 
 export const getUsersByKeyword = async (
@@ -45,5 +54,47 @@ export const getUsersByKeyword = async (
     }
     console.log(`${users.length - oldLen} users found by ${target}`);
   }
+  return users;
+};
+
+export const getUsersByKeyword_2 = async (
+  keyword: string,
+  targets: Target[]
+): Promise<SearchedUser[]> => {
+  let users: SearchedUser[] = [];
+  let userIds: string[] = [];
+  for (const target of targets) {
+    const oldLen = users.length;
+    switch (target) {
+      case "userName":
+        userIds = userIds.concat(await getUserIdsByUserName(keyword));
+        break;
+      case "kana":
+        userIds = userIds.concat(await getUserIdsByKana(keyword));
+        break;
+      case "mail":
+        userIds = userIds.concat(await getUserIdsByMail(keyword));
+        break;
+      case "department":
+        userIds = userIds.concat(await getUserIdsByDepartmentName(keyword));
+        break;
+      case "role":
+        userIds = userIds.concat(await getUserIdsByRoleName(keyword));
+        break;
+      case "office":
+        userIds = userIds.concat(await getUserIdsByOfficeName(keyword));
+        break;
+      case "skill":
+        userIds = userIds.concat(await getUserIdsBySkillName(keyword));
+        break;
+      case "goal":
+        userIds = userIds.concat(await getUserIdsByGoal(keyword));
+        break;
+    }
+    
+    console.log(`${users.length - oldLen} users found by ${target}`);
+  }
+  // Get users by userIds
+  users = users.concat(await getUsersByUserIds(userIds));
   return users;
 };

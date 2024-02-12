@@ -4,7 +4,7 @@ import { getUsers } from "./repository";
 import { getUserByUserId } from "./repository";
 import { getFileByFileId } from "../files/repository";
 import { SearchedUser, Target, User } from "../../model/types";
-import { getUsersByKeyword } from "./usecase";
+import { getUsersByKeyword_2 } from "./usecase";
 
 export const usersRouter = express.Router();
 
@@ -134,7 +134,7 @@ usersRouter.get(
       offset = 0;
     }
     try {
-      const duplicateUsers = await getUsersByKeyword(
+      const duplicateUsers = await getUsersByKeyword_2(
         keyword,
         targets as Target[]
       );
