@@ -111,3 +111,62 @@ export const getUsersByKeyword_2 = async (
   return users;
 };
 
+
+export const getUsersByKeywordSearch = async (
+  keyword: string,
+  targets: Target[]
+): Promise<SearchedUser[]> => {
+  let users: SearchedUser[] = [];
+  let userIds: string[] = [];
+  let query = `SELECT DISTINCT user_id, user_name, kana, entry_date, office_id, user_icon_id FROM user WHERE`;
+  const values: any[] = [];
+
+  for (const target of targets) {
+    const oldLen = users.length;
+    switch (target) {
+      case "userName":
+        query += ` user_name LIKE ? OR`;
+        values.push(`%${keyword}%`);
+        //userIds = userIds.concat(await getUserIdsByUserName(keyword));
+        break;
+      case "kana":
+        query += ` kana LIKE ? OR`;
+        values.push(`%${keyword}%`);
+        //userIds = userIds.concat(await getUserIdsByKana(keyword));
+        break;
+      case "mail":
+        query += ` mail LIKE ? OR`;
+        values.push(`%${keyword}%`);
+        //userIds = userIds.concat(await getUserIdsByMail(keyword));
+        break;
+      case "department":
+        userIds = userIds.concat(await getUserIdsByDepartmentName(keyword));
+        break;
+      case "role":
+        userIds = userIds.concat(await getUserIdsByRoleName(keyword));
+        break;
+      case "office":
+        userIds = userIds.concat(await getUserIdsByOfficeName(keyword));
+        break;
+      case "skill":
+        userIds = userIds.concat(await getUserIdsBySkillName(keyword));
+        break;
+      case "goal":
+        query += ` goal LIKE ? OR`;
+        values.push(`%${keyword}%`);
+        //userIds = userIds.concat(await getUserIdsByGoal(keyword));
+        break;
+    }
+    //Remove the last " OR"
+    query += ` user_id IN (${userIds.map(() => "?").join(",")})`;
+    //query string
+
+    
+    console.log(`${users.length - oldLen} users found by ${target}`);
+  }
+  // Get users by userIds
+  users = users.concat(await getUsersFromQuery(query,values));
+  
+  return users;
+};
+
