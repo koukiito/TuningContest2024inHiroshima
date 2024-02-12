@@ -35,30 +35,21 @@ export const getUserByUserId = async (
   userId: string
 ): Promise<User | undefined> => {
   const [user] = await pool.query<RowDataPacket[]>(
-    "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
+    "SELECT user_id, user_name, user.office_id AS office_id, user_icon_id, office_name, file_name FROM user, office, file WHERE user.user_icon_id = file.file_id AND user.office_id = office.office_id AND user_id = ?",
     [userId]
   );
   if (user.length === 0) {
     return;
   }
 
-  const [office] = await pool.query<RowDataPacket[]>(
-    `SELECT office_name FROM office WHERE office_id = ?`,
-    [user[0].office_id]
-  );
-  const [file] = await pool.query<RowDataPacket[]>(
-    `SELECT file_name FROM file WHERE file_id = ?`,
-    [user[0].user_icon_id]
-  );
-
   return {
     userId: user[0].user_id,
     userName: user[0].user_name,
     userIcon: {
       fileId: user[0].user_icon_id,
-      fileName: file[0].file_name,
+      fileName: user[0].file_name,
     },
-    officeName: office[0].office_name,
+    officeName: user[0].office_name,
   };
 };
 
@@ -68,23 +59,12 @@ export const getUsersByUserIds = async (
   let users: SearchedUser[] = [];
   for (const userId of userIds) {
     const [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, kana, entry_date, office_id, user_icon_id FROM user WHERE user_id = ?",
+      "SELECT user_id, user_name, user.office_id AS office_id, user_icon_id, office_name, file_name FROM user, office, file WHERE user.user_icon_id = file.file_id AND user.office_id = office.office_id AND user_id = ?",
       [userId]
     );
     if (userRows.length === 0) {
       continue;
     }
-
-    const [officeRows] = await pool.query<RowDataPacket[]>(
-      `SELECT office_name FROM office WHERE office_id = ?`,
-      [userRows[0].office_id]
-    );
-    const [fileRows] = await pool.query<RowDataPacket[]>(
-      `SELECT file_name FROM file WHERE file_id = ?`,
-      [userRows[0].user_icon_id]
-    );
-    userRows[0].office_name = officeRows[0].office_name;
-    userRows[0].file_name = fileRows[0].file_name;
 
     users = users.concat(convertToSearchedUser(userRows));
   }
