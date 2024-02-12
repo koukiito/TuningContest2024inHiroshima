@@ -63,16 +63,25 @@ export const getUsersByKeyword_2 = async (
 ): Promise<SearchedUser[]> => {
   let users: SearchedUser[] = [];
   let userIds: string[] = [];
+  //let query = `SELECT user_id, user_name, kana, entry_date, office_id, user_icon_id FROM user WHERE`;
+  //const values: any[] = [];
+
   for (const target of targets) {
     const oldLen = users.length;
     switch (target) {
       case "userName":
+        //query += ` user_name LIKE ? OR`;
+        //values.push(`%${keyword}%`);
         userIds = userIds.concat(await getUserIdsByUserName(keyword));
         break;
       case "kana":
+        //query += ` kana LIKE ? OR`;
+        //values.push(`%${keyword}%`);
         userIds = userIds.concat(await getUserIdsByKana(keyword));
         break;
       case "mail":
+        //query += ` mail LIKE ? OR`;
+        //values.push(`%${keyword}%`);
         userIds = userIds.concat(await getUserIdsByMail(keyword));
         break;
       case "department":
@@ -88,9 +97,13 @@ export const getUsersByKeyword_2 = async (
         userIds = userIds.concat(await getUserIdsBySkillName(keyword));
         break;
       case "goal":
+        //query += ` goal LIKE ? OR`;
+        //values.push(`%${keyword}%`);
         userIds = userIds.concat(await getUserIdsByGoal(keyword));
         break;
     }
+    // Remove the last " OR"
+    //query += ` user_id IN (${userIds.map(() => "?").join(",")})`;
     
     console.log(`${users.length - oldLen} users found by ${target}`);
   }
