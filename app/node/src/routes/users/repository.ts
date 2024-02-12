@@ -35,21 +35,30 @@ export const getUserByUserId = async (
   userId: string
 ): Promise<User | undefined> => {
   const [user] = await pool.query<RowDataPacket[]>(
-    "SELECT user_id, user_name, user.office_id AS office_id, user_icon_id, office_name, file_name FROM user, office, file WHERE user.user_icon_id = file.file_id AND user.office_id = office.office_id AND user_id = ?",
+    "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
     [userId]
   );
   if (user.length === 0) {
     return;
   }
 
+  const [office] = await pool.query<RowDataPacket[]>(
+    `SELECT office_name FROM office WHERE office_id = ?`,
+    [user[0].office_id]
+  );
+  const [file] = await pool.query<RowDataPacket[]>(
+    `SELECT file_name FROM file WHERE file_id = ?`,
+    [user[0].user_icon_id]
+  );
+
   return {
     userId: user[0].user_id,
     userName: user[0].user_name,
     userIcon: {
       fileId: user[0].user_icon_id,
-      fileName: user[0].file_name,
+      fileName: file[0].file_name,
     },
-    officeName: user[0].office_name,
+    officeName: office[0].office_name,
   };
 };
 
@@ -59,12 +68,23 @@ export const getUsersByUserIds = async (
   let users: SearchedUser[] = [];
   for (const userId of userIds) {
     const [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, user.office_id AS office_id, user_icon_id, office_name, file_name FROM user, office, file WHERE user.user_icon_id = file.file_id AND user.office_id = office.office_id AND user_id = ?",
+      "SELECT user_id, user_name, kana, entry_date, office_id, user_icon_id FROM user WHERE user_id = ?",
       [userId]
     );
     if (userRows.length === 0) {
       continue;
     }
+
+    const [officeRows] = await pool.query<RowDataPacket[]>(
+      `SELECT office_name FROM office WHERE office_id = ?`,
+      [userRows[0].office_id]
+    );
+    const [fileRows] = await pool.query<RowDataPacket[]>(
+      `SELECT file_name FROM file WHERE file_id = ?`,
+      [userRows[0].user_icon_id]
+    );
+    userRows[0].office_name = officeRows[0].office_name;
+    userRows[0].file_name = fileRows[0].file_name;
 
     users = users.concat(convertToSearchedUser(userRows));
   }
@@ -198,6 +218,138 @@ export const getUsersByGoal = async (goal: string): Promise<SearchedUser[]> => {
 
   return getUsersByUserIds(userIds);
 };
+
+//From here
+
+export const getUserIdsByUserName = async (
+  userName: string
+): Promise<string[]> => {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM user WHERE user_name LIKE ?`,
+    [`%${userName}%`]
+  );
+  const userIds: string[] = rows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsByKana = async (kana: string): Promise<string[]> => {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM user WHERE kana LIKE ?`,
+    [`%${kana}%`]
+  );
+  const userIds: string[] = rows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsByMail = async (mail: string): Promise<string[]> => {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM user WHERE mail LIKE ?`,
+    [`%${mail}%`]
+  );
+  const userIds: string[] = rows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsByDepartmentName = async (
+  departmentName: string
+): Promise<string[]> => {
+  const [departmentIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT department_id FROM department WHERE department_name LIKE ? AND active = true`,
+    [`%${departmentName}%`]
+  );
+  const departmentIds: string[] = departmentIdRows.map(
+    (row) => row.department_id
+  );
+  if (departmentIds.length === 0) {
+    return [];
+  }
+
+  const [userIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM department_role_member WHERE department_id IN (?) AND belong = true`,
+    [departmentIds]
+  );
+  const userIds: string[] = userIdRows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsByRoleName = async (
+  roleName: string
+): Promise<string[]> => {
+  const [roleIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT role_id FROM role WHERE role_name LIKE ? AND active = true`,
+    [`%${roleName}%`]
+  );
+  const roleIds: string[] = roleIdRows.map((row) => row.role_id);
+  if (roleIds.length === 0) {
+    return [];
+  }
+
+  const [userIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM department_role_member WHERE role_id IN (?) AND belong = true`,
+    [roleIds]
+  );
+  const userIds: string[] = userIdRows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsByOfficeName = async (
+  officeName: string
+): Promise<string[]> => {
+  const [officeIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT office_id FROM office WHERE office_name LIKE ?`,
+    [`%${officeName}%`]
+  );
+  const officeIds: string[] = officeIdRows.map((row) => row.office_id);
+  if (officeIds.length === 0) {
+    return [];
+  }
+
+  const [userIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM user WHERE office_id IN (?)`,
+    [officeIds]
+  );
+  const userIds: string[] = userIdRows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsBySkillName = async (
+  skillName: string
+): Promise<string[]> => {
+  const [skillIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT skill_id FROM skill WHERE skill_name LIKE ?`,
+    [`%${skillName}%`]
+  );
+  const skillIds: string[] = skillIdRows.map((row) => row.skill_id);
+  if (skillIds.length === 0) {
+    return [];
+  }
+
+  const [userIdRows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM skill_member WHERE skill_id IN (?)`,
+    [skillIds]
+  );
+  const userIds: string[] = userIdRows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+export const getUserIdsByGoal = async (goal: string): Promise<string[]> => {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id FROM user WHERE goal LIKE ?`,
+    [`%${goal}%`]
+  );
+  const userIds: string[] = rows.map((row) => row.user_id);
+
+  return userIds;
+};
+
+//End
 
 export const getUserForFilter = async (
   userId?: string
