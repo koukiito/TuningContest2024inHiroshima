@@ -68,6 +68,7 @@ export const getUsersByKeyword = async (
 ): Promise<SearchedUser[]> => {
   let users: SearchedUser[] = [];
   let userIds: string[] = [];
+  
   for (const target of targets) {
     const oldLen = users.length;
     switch (target) {
