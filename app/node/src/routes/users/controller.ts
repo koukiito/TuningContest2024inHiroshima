@@ -37,7 +37,7 @@ usersRouter.get(
       const path = userIcon.path;
       // 500px x 500pxでリサイズ
 
-      exec(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*10, timeout: 60000, encoding: "base64"}, (err, stdout, stderr) => {
+      exec(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*100, timeout: 120000, encoding: "base64"}, (err, stdout, stderr) => {
         if (err) {
           console.error(err);
           return;
