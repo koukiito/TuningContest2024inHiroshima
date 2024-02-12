@@ -381,3 +381,23 @@ export const getUserIdsByGoal = async (goal: string): Promise<string[]> => {
 
   return userIds;
 };
+
+// --- Additional 2
+
+export const getUsersByUserIdsSorted = async (
+  userIds: string[]
+): Promise<SearchedUser[]> => {
+  let users: SearchedUser[] = [];
+  for (const userId of userIds) {
+    const [userRows] = await pool.query<RowDataPacket[]>(
+      "SELECT user_id, user_name, kana, entry_date, user.office_id AS office_id, office_name, user_icon_id, file_name FROM user, office, file WHERE file_id = user_icon_id AND user.office_id = office.office_id AND user_id = ? ORDER BY entry_date ASC, kana ASC",
+      [userId]
+    );
+    if (userRows.length === 0) {
+      continue;
+    }
+
+    users = users.concat(convertToSearchedUser(userRows));
+  }
+  return users;
+};
