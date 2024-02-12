@@ -8,7 +8,7 @@ import {
   getUserIdsByOfficeName,
   getUserIdsBySkillName,
   getUserIdsByGoal,
-  getUsersByUserIds,
+  getUsersByUserIdsSorted,
 } from "./repository";
 // import {
 //   getUsersByUserName,
@@ -99,6 +99,6 @@ export const getUsersByKeyword = async (
     }
     console.log(`${users.length - oldLen} users found by ${target}`);
   }
-  users = await getUsersByUserIds(userIds);
+  users = await getUsersByUserIdsSorted(userIds);
   return users;
 };

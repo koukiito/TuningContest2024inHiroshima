@@ -1,12 +1,18 @@
 import express from "express";
-import { execSync } from "child_process";
+//import { execSync } from "child_process";
 import { getUsers } from "./repository";
 import { getUserByUserId } from "./repository";
 import { getFileByFileId } from "../files/repository";
 import { SearchedUser, Target, User } from "../../model/types";
 import { getUsersByKeyword } from "./usecase";
+import { exec } from "child_process";
+//import { promisify } from "util";
+//import {util} from "util";
 
 export const usersRouter = express.Router();
+
+//execPromiseを使うための宣言
+//const execPromise = util.promisify(exec);
 
 // ユーザーアイコン画像取得API
 usersRouter.get(
@@ -30,14 +36,38 @@ usersRouter.get(
       }
       const path = userIcon.path;
       // 500px x 500pxでリサイズ
-      const data = execSync(`convert ${path} -resize 500x500! PNG:-`, {
-        shell: "/bin/bash",
+
+      exec(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*10, timeout: 20000, encoding: "base64"}, (err, stdout, stderr) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        if (stderr) {
+          console.error(stderr);
+          return;
+        }
+        //const data = Buffer.from(stdout).toString("base64");
+        res.status(200).json({
+          fileName: userIcon.fileName,
+          //data: stdout.toString("base64"),
+          data: stdout,
+          //data: data,
+        });
       });
-      res.status(200).json({
-        fileName: userIcon.fileName,
-        data: data.toString("base64"),
-      });
-      console.log("successfully get user icon");
+      
+
+      
+      // const data = execSync(`convert ${path} -resize 500x500! PNG:-`, {
+      //   shell: "/bin/bash",
+      // });
+      // res.status(200).json({
+      //           fileName: userIcon.fileName,
+      //           //data: stdout.toString("base64"),
+      //           data: data.toString("base64"),
+      //           //data: data,
+      //         });
+      //         console.log("successfully get user icon");
+      
     } catch (e) {
       next(e);
     }
@@ -144,7 +174,7 @@ usersRouter.get(
         return;
       }
 
-      // 入社日・よみがなの昇順でソート
+      //入社日・よみがなの昇順でソート
       duplicateUsers.sort((a, b) => {
         if (a.entryDate < b.entryDate) return -1;
         if (a.entryDate > b.entryDate) return 1;
