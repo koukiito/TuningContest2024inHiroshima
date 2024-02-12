@@ -31,6 +31,14 @@ export const getUsers_2 = async (
   return convertToUsers(userRows);
 };
 
+export const getUsersFromQuery = async (
+  query: string,
+  values: any[]
+): Promise<SearchedUser[]> => {
+  const [userRows] = await pool.query<RowDataPacket[]>(query, [values]);
+  return convertToSearchedUser(userRows);
+};
+
 export const getUserByUserId = async (
   userId: string
 ): Promise<User | undefined> => {
@@ -88,7 +96,7 @@ export const getUsersByUserIds = async (
       user.kana ASC
   `;
   const [userRows] = await pool.query<RowDataPacket[]>(query, [userIds]);
-  return convertToSearchedUser(userRows);;
+  return convertToSearchedUser(userRows);
 };
 
 export const getUsersByUserName = async (
