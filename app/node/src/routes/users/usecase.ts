@@ -8,6 +8,7 @@ import {
   getUsersByOfficeName,
   getUsersBySkillName,
   getUsersByGoal,
+  getUsersByUserIds,
 } from "./repository";
 
 export const getUsersByKeyword = async (
