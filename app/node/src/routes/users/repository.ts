@@ -296,6 +296,13 @@ export const getUserIdsByDepartmentName = async (
   );
   if (departmentIds.length === 0) {
     return [];
+  }else if (departmentIds.length === 1) {
+    const [userIdRows] = await pool.query<RowDataPacket[]>(
+      `SELECT user_id FROM department_role_member WHERE department_id = ? AND belong = true`,
+      [departmentIds[0]]
+    );
+    const userIds: string[] = userIdRows.map((row) => row.user_id);
+    return userIds;
   }
 
   const [userIdRows] = await pool.query<RowDataPacket[]>(
