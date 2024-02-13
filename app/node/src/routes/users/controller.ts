@@ -1,18 +1,13 @@
 import express from "express";
-//import { execSync } from "child_process";
+import { execSync } from "child_process";
 import { getUsers } from "./repository";
 import { getUserByUserId } from "./repository";
 import { getFileByFileId } from "../files/repository";
 import { SearchedUser, Target, User } from "../../model/types";
 import { getUsersByKeyword } from "./usecase";
-import { exec } from "child_process";
-import { promisify } from "util";
-//import {util} from "util";
+
 
 export const usersRouter = express.Router();
-
-//execPromiseを使うための宣言
-const execPromise = promisify(exec);
 
 // ユーザーアイコン画像取得API
 usersRouter.get(
@@ -36,17 +31,6 @@ usersRouter.get(
       }
       const path = userIcon.path;
       // 500px x 500pxでリサイズ
-      
-      try{
-        const resExec = await execPromise(`convert ${path} -resize 500x500! PNG:-`, { shell: "/bin/bash", maxBuffer: 1024 * 1024 * 1000, timeout: 120000, encoding: "base64" });
-          res.status(200).json({
-          fileName: userIcon.fileName,
-          data: resExec.stdout,
-        });
-        console.log("successfully get user icon");
-      }catch(e){
-        next(e);
-      }
     
 
       // res.status(200).json({
@@ -77,16 +61,16 @@ usersRouter.get(
       
 
       
-      // const data = execSync(`convert ${path} -resize 500x500! PNG:-`, {
-      //   shell: "/bin/bash",
-      // });
-      // res.status(200).json({
-      //           fileName: userIcon.fileName,
-      //           //data: stdout.toString("base64"),
-      //           data: data.toString("base64"),
-      //           //data: data,
-      //         });
-      //         console.log("successfully get user icon");
+      const data = execSync(`convert ${path} -resize 500x500! PNG:-`, {
+        shell: "/bin/bash",
+      });
+      res.status(200).json({
+                fileName: userIcon.fileName,
+                //data: stdout.toString("base64"),
+                data: data.toString("base64"),
+                //data: data,
+              });
+              console.log("successfully get user icon");
       
     } catch (e) {
       next(e);
