@@ -37,22 +37,22 @@ usersRouter.get(
       const path = userIcon.path;
       // 500px x 500pxでリサイズ
 
-      exec(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*100, timeout: 120000, encoding: "base64"}, (err, stdout, stderr) => {
+      exec(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*1000, timeout: 120000, encoding: "base64"}, (err, stdout, stderr) => {
         if (err) {
-          console.error(err);
-          return;
+          
         }
         if (stderr) {
-          console.error(stderr);
-          return;
+          
+        }else{
+          res.status(200).json({
+            fileName: userIcon.fileName,
+            //data: stdout.toString("base64"),
+            data: stdout,
+            //data: data,
+          });
+          console.log("successfully get user icon");
         }
         //const data = Buffer.from(stdout).toString("base64");
-        res.status(200).json({
-          fileName: userIcon.fileName,
-          //data: stdout.toString("base64"),
-          data: stdout,
-          //data: data,
-        });
       });
       
 
