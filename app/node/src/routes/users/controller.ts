@@ -60,7 +60,7 @@ usersRouter.get(
         }
 
       }
-    }
+   
 
       // const resizedFile = await getResizedFileByFileId(userIconId);
 
