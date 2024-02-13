@@ -2,9 +2,10 @@ import express from "express";
 import { execSync } from "child_process";
 import { getUsers } from "./repository";
 import { getUserByUserId } from "./repository";
-import { getFileByFileId } from "../files/repository";
+import { getFileByFileId} from "../files/repository";
 import { SearchedUser, Target, User } from "../../model/types";
 import { getUsersByKeyword } from "./usecase";
+import { readFileSync } from 'node:fs';
 
 
 export const usersRouter = express.Router();
@@ -31,6 +32,51 @@ usersRouter.get(
       }
       const path = userIcon.path;
       // 500px x 500pxでリサイズ
+
+      const newPath = path.replace(".png", "-500.png"); 
+
+      try{
+        const data = readFileSync(newPath);
+         res.status(200).json({
+           fileName: userIcon.fileName,
+           data: data.toString("base64"),
+         });
+      }catch(e){
+        const data = execSync(`convert ${path}  -resize 500x500! PNG:-  ${newPath} `, {
+          shell: "/bin/bash",
+        });
+        res.status(200).json({
+          fileName: userIcon.fileName,
+          data: data.toString("base64"),
+        });
+        console.log("successfully get user icon");
+      }
+
+      // const resizedFile = await getResizedFileByFileId(userIconId);
+
+      // if (resizedFile != undefined) {
+      //   //read file
+      //   const data = readFileSync(resizedFile);
+      //   res.status(200).json({
+      //     fileName: userIcon.fileName,
+      //     data: data.toString("base64"),
+      //   });
+      //   console.log("successfully get user icon");
+      //   return;
+      // } else {
+      //   //convert with output
+      //   //replace .png to -500.png
+      //   const newPath = path.replace(".png", "-500.png"); 
+      //   const data = execSync(`convert ${path}  -resize 500x500! PNG:-  ${newPath} `, {
+      //     shell: "/bin/bash",
+      //   });
+      //   await addResizedFileByFileId(userIconId, newPath);
+      //   res.status(200).json({
+      //     fileName: userIcon.fileName,
+      //     data: data.toString("base64"),
+      //   });
+      //   console.log("successfully get user icon");
+      // }
     
 
       // res.status(200).json({
@@ -61,16 +107,16 @@ usersRouter.get(
       
 
       
-      const data = execSync(`convert ${path} -resize 500x500! PNG:-`, {
-        shell: "/bin/bash",
-      });
-      res.status(200).json({
-                fileName: userIcon.fileName,
-                //data: stdout.toString("base64"),
-                data: data.toString("base64"),
-                //data: data,
-              });
-              console.log("successfully get user icon");
+      // const data = execSync(`convert ${path} -resize 500x500! PNG:-`, {
+      //   shell: "/bin/bash",
+      // });
+      // res.status(200).json({
+      //           fileName: userIcon.fileName,
+      //           //data: stdout.toString("base64"),
+      //           data: data.toString("base64"),
+      //           //data: data,
+      //         });
+      //         console.log("successfully get user icon");
       
     } catch (e) {
       next(e);
