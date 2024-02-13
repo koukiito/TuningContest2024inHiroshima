@@ -68,37 +68,48 @@ export const getUsersByKeyword = async (
 ): Promise<SearchedUser[]> => {
   let users: SearchedUser[] = [];
   let userIds: string[] = [];
-  
+
+  // プロミスを格納する配列
+  const promises: Promise<string[]>[] = [];
+
   for (const target of targets) {
-    const oldLen = users.length;
+    // 各ターゲットに対する非同期処理を追加
     switch (target) {
       case "userName":
-        userIds = userIds.concat(await getUserIdsByUserName(keyword));
+        promises.push(getUserIdsByUserName(keyword));
         break;
       case "kana":
-        userIds = userIds.concat(await getUserIdsByKana(keyword));
+        promises.push(getUserIdsByKana(keyword));
         break;
       case "mail":
-        userIds = userIds.concat(await getUserIdsByMail(keyword));
+        promises.push(getUserIdsByMail(keyword));
         break;
       case "department":
-        userIds = userIds.concat(await getUserIdsByDepartmentName(keyword));
+        promises.push(getUserIdsByDepartmentName(keyword));
         break;
       case "role":
-        userIds = userIds.concat(await getUserIdsByRoleName(keyword));
+        promises.push(getUserIdsByRoleName(keyword));
         break;
       case "office":
-        userIds = userIds.concat(await getUserIdsByOfficeName(keyword));
+        promises.push(getUserIdsByOfficeName(keyword));
         break;
       case "skill":
-        userIds = userIds.concat(await getUserIdsBySkillName(keyword));
+        promises.push(getUserIdsBySkillName(keyword));
         break;
       case "goal":
-        userIds = userIds.concat(await getUserIdsByGoal(keyword));
+        promises.push(getUserIdsByGoal(keyword));
         break;
     }
-    console.log(`${users.length - oldLen} users found by ${target}`);
   }
+
+  // すべての非同期処理を並列に実行
+  const results = await Promise.all(promises);
+
+  // 取得したユーザーIDを結合する
+  userIds = results.reduce((acc, val) => acc.concat(val), []);
+
+  // ユーザーIDを用いてユーザー情報を取得
   users = await getUsersByUserIdsSorted(userIds);
+
   return users;
 };
