@@ -233,7 +233,8 @@ export const getUserForFilter = async (
     [user.user_icon_id]
   );
   const [departmentNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT department_name FROM department WHERE department_id = (SELECT department_id FROM department_role_member WHERE user_id = ? AND belong = true)`,
+    //`SELECT department_name FROM department WHERE department_id = (SELECT department_id FROM department_role_member WHERE user_id = ? AND belong = true)`,
+    `SELECT department_name FROM department, department_role_member WHERE department.department_id = department_role_member.department_id AND department_role_member.user_id = ? AND belong = true`,
     [user.user_id]
   );
   const [skillNameRows] = await pool.query<RowDataPacket[]>(
@@ -296,7 +297,7 @@ export const getUserIdsByDepartmentName = async (
   );
   if (departmentIds.length === 0) {
     return [];
-  }else if (departmentIds.length === 1) {
+  } else if (departmentIds.length === 1) {
     const [userIdRows] = await pool.query<RowDataPacket[]>(
       `SELECT user_id FROM department_role_member WHERE department_id = ? AND belong = true`,
       [departmentIds[0]]
@@ -324,6 +325,13 @@ export const getUserIdsByRoleName = async (
   const roleIds: string[] = roleIdRows.map((row) => row.role_id);
   if (roleIds.length === 0) {
     return [];
+  }else if (roleIds.length === 1) {
+    const [userIdRows] = await pool.query<RowDataPacket[]>(
+      `SELECT user_id FROM department_role_member WHERE role_id = ? AND belong = true`,
+      [roleIds[0]]
+    );
+    const userIds: string[] = userIdRows.map((row) => row.user_id);
+    return userIds;
   }
 
   const [userIdRows] = await pool.query<RowDataPacket[]>(
@@ -395,16 +403,21 @@ export const getUsersByUserIdsSorted = async (
   userIds: string[]
 ): Promise<SearchedUser[]> => {
   let users: SearchedUser[] = [];
-  for (const userId of userIds) {
-    const [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, kana, entry_date, user.office_id AS office_id, office_name, user_icon_id, file_name FROM user, office, file WHERE file_id = user_icon_id AND user.office_id = office.office_id AND user_id = ? ORDER BY entry_date ASC, kana ASC",
-      [userId]
-    );
-    if (userRows.length === 0) {
-      continue;
-    }
+  const [userRows] = await pool.query<RowDataPacket[]>(
+        "SELECT user_id, user_name, kana, entry_date, user.office_id AS office_id, office_name, user_icon_id, file_name FROM user, office, file WHERE file_id = user_icon_id AND user.office_id = office.office_id AND user_id IN (?) ORDER BY entry_date ASC, kana ASC",
+        [userIds]
+      );
+  users = users.concat(convertToSearchedUser(userRows));
+  // for (const userId of userIds) {
+  //   const [userRows] = await pool.query<RowDataPacket[]>(
+  //     "SELECT user_id, user_name, kana, entry_date, user.office_id AS office_id, office_name, user_icon_id, file_name FROM user, office, file WHERE file_id = user_icon_id AND user.office_id = office.office_id AND user_id = ? ORDER BY entry_date ASC, kana ASC",
+  //     [userId]
+  //   );
+  //   if (userRows.length === 0) {
+  //     continue;
+  //   }
 
-    users = users.concat(convertToSearchedUser(userRows));
-  }
+  //   users = users.concat(convertToSearchedUser(userRows));
+  // }
   return users;
 };
