@@ -6,13 +6,13 @@ import { getFileByFileId } from "../files/repository";
 import { SearchedUser, Target, User } from "../../model/types";
 import { getUsersByKeyword } from "./usecase";
 import { exec } from "child_process";
-//import { promisify } from "util";
+import { promisify } from "util";
 //import {util} from "util";
 
 export const usersRouter = express.Router();
 
 //execPromiseを使うための宣言
-//const execPromise = util.promisify(exec);
+const execPromise = promisify(exec);
 
 // ユーザーアイコン画像取得API
 usersRouter.get(
@@ -36,24 +36,39 @@ usersRouter.get(
       }
       const path = userIcon.path;
       // 500px x 500pxでリサイズ
-
-      exec(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*1000, timeout: 120000, encoding: "base64"}, (err, stdout, stderr) => {
-        if (err) {
-          
-        }
-        if (stderr) {
-          
-        }else{
-          res.status(200).json({
-            fileName: userIcon.fileName,
-            //data: stdout.toString("base64"),
-            data: stdout,
-            //data: data,
-          });
-          console.log("successfully get user icon");
-        }
-        //const data = Buffer.from(stdout).toString("base64");
+      
+      const resExec = await execPromise(`convert ${path} -resize 500x500! PNG:-`, { shell: "/bin/bash", maxBuffer: 1024 * 1024 * 1000, timeout: 120000, encoding: "base64" });
+      res.status(200).json({
+        fileName: userIcon.fileName,
+        data: resExec.stdout,
       });
+      console.log("successfully get user icon");
+
+      // res.status(200).json({
+      //   fileName: userIcon.fileName,
+      //   //data: stdout.toString("base64"),
+      //   data: stdout,
+      //   //data: data,
+      // });
+      // console.log("successfully get user icon");
+
+      // await execPromise(`convert ${path} -resize 500x500! PNG:-`,{ shell: "/bin/bash",maxBuffer: 1024 * 1024*1000, timeout: 120000, encoding: "base64"}, (err, stdout, stderr) => {
+      //   if (err) {
+          
+      //   }
+      //   if (stderr) {
+          
+      //   }else{
+      //     res.status(200).json({
+      //       fileName: userIcon.fileName,
+      //       //data: stdout.toString("base64"),
+      //       data: stdout,
+      //       //data: data,
+      //     });
+      //     console.log("successfully get user icon");
+      //   }
+      //   //const data = Buffer.from(stdout).toString("base64");
+      // });
       
 
       
