@@ -42,15 +42,25 @@ usersRouter.get(
            data: data.toString("base64"),
          });
       }catch(e){
-        const data = execSync(`convert ${path}  -resize 500x500! PNG:-  ${newPath} `, {
-          shell: "/bin/bash",
-        });
-        res.status(200).json({
-          fileName: userIcon.fileName,
-          data: data.toString("base64"),
-        });
-        console.log("successfully get user icon");
+        try{
+          const data = execSync(`convert ${path}  -resize 500x500! PNG:-  ${newPath} `, {
+            shell: "/bin/bash",
+          });
+          res.status(200).json({
+            fileName: userIcon.fileName,
+            data: data.toString("base64"),
+          });
+          console.log("successfully get user icon");
+        }catch(e){
+          const data = readFileSync(newPath);
+          res.status(200).json({
+            fileName: userIcon.fileName,
+            data: data.toString("base64"),
+          });
+        }
+
       }
+    }
 
       // const resizedFile = await getResizedFileByFileId(userIconId);
 
